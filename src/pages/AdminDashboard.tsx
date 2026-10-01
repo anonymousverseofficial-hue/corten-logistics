@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../cont/AuthContext'
 import { supabase } from '../supabaseClient'
 import OrderForm from '../components/OrderForm'
 import OrdersList from '../components/OrdersList'

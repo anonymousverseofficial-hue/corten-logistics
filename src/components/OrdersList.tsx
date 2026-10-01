@@ -39,24 +39,41 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
     fetchOrders()
   }, [refreshTrigger])
 
-  // Update order status
+  // Update order status AND create tracking history
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     setUpdatingId(orderId)
 
-    const { error } = await supabase
+    // 1. Update the order status
+    const { error: updateError } = await supabase
       .from('orders')
       .update({ status: newStatus })
       .eq('id', orderId)
 
-    if (error) {
-      console.error('Error updating status:', error)
+    if (updateError) {
+      console.error('Error updating status:', updateError)
       alert('Failed to update status')
-    } else {
-      // Update local state so UI reflects change immediately
-      setOrders(orders.map(order =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ))
+      setUpdatingId(null)
+      return
     }
+
+    // 2. Create a tracking update record (History)
+    const { error: trackingError } = await supabase
+      .from('tracking_updates')
+      .insert([{
+        order_id: orderId,
+        status: newStatus,
+        location: 'Distribution Center',
+        timestamp: new Date().toISOString()
+      }])
+
+    if (trackingError) {
+      console.error('Error creating tracking update:', trackingError)
+    }
+
+    // 3. Update local state
+    setOrders(orders.map(order =>
+      order.id === orderId ? { ...order, status: newStatus } : order
+    ))
 
     setUpdatingId(null)
   }
