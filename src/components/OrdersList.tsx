@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-// @ts-expect-error The JavaScript Supabase client currently has no declaration file.
 import { supabase } from '../supabaseClient'
 
 interface Order {
@@ -18,6 +17,7 @@ interface OrdersListProps {
 function OrdersList({ refreshTrigger }: OrdersListProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const fetchOrders = async () => {
     setLoading(true)
@@ -39,6 +39,59 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
     fetchOrders()
   }, [refreshTrigger])
 
+  // Update order status
+  const handleStatusChange = async (orderId: number, newStatus: string) => {
+    setUpdatingId(orderId)
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: newStatus })
+      .eq('id', orderId)
+
+    if (error) {
+      console.error('Error updating status:', error)
+      alert('Failed to update status')
+    } else {
+      // Update local state so UI reflects change immediately
+      setOrders(orders.map(order =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ))
+    }
+
+    setUpdatingId(null)
+  }
+
+  // Delete an order
+  const handleDelete = async (orderId: number, trackingNumber: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete order ${trackingNumber}? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', orderId)
+
+    if (error) {
+      console.error('Error deleting order:', error)
+      alert('Failed to delete order')
+    } else {
+      setOrders(orders.filter(order => order.id !== orderId))
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return 'bg-green-600'
+      case 'in-transit':
+        return 'bg-yellow-600'
+      default:
+        return 'bg-slate-600'
+    }
+  }
+
   if (loading) return <p className="text-slate-400">Loading orders...</p>
 
   return (
@@ -54,25 +107,37 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
               <th className="p-2">Status</th>
               <th className="p-2">Destination</th>
               <th className="p-2">Created</th>
+              <th className="p-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order.id} className="border-b border-slate-700 hover:bg-slate-750">
+              <tr key={order.id} className="border-b border-slate-700">
                 <td className="p-2 font-mono text-blue-400">{order.tracking_number}</td>
                 <td className="p-2">{order.customer_name}</td>
                 <td className="p-2">
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    order.status === 'delivered' ? 'bg-green-600' :
-                    order.status === 'in-transit' ? 'bg-yellow-600' :
-                    'bg-slate-600'
-                  }`}>
-                    {order.status}
-                  </span>
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                    disabled={updatingId === order.id}
+                    className={`px-2 py-1 rounded text-sm text-white border-none outline-none cursor-pointer disabled:opacity-50 ${getStatusColor(order.status)}`}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="in-transit">In Transit</option>
+                    <option value="delivered">Delivered</option>
+                  </select>
                 </td>
                 <td className="p-2">{order.destination}</td>
                 <td className="p-2 text-sm text-slate-400">
                   {new Date(order.created_at).toLocaleDateString()}
+                </td>
+                <td className="p-2">
+                  <button
+                    onClick={() => handleDelete(order.id, order.tracking_number)}
+                    className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm text-white transition"
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
