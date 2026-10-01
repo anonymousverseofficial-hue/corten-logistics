@@ -35,7 +35,7 @@ const Navbar = () => {
               </span>
             </Link>
           </div>
-
+    <Link to="/track" className="hover:text-blue-400">Track Order</Link>
           {/* Desktop Links */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
