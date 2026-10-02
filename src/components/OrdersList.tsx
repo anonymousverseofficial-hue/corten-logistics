@@ -5,6 +5,8 @@ interface Order {
   id: number
   tracking_number: string
   customer_name: string
+  customer_email: string
+  description: string
   status: string
   destination: string
   created_at: string
@@ -39,11 +41,9 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
     fetchOrders()
   }, [refreshTrigger])
 
-  // Update order status AND create tracking history
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     setUpdatingId(orderId)
 
-    // 1. Update the order status
     const { error: updateError } = await supabase
       .from('orders')
       .update({ status: newStatus })
@@ -56,7 +56,6 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
       return
     }
 
-    // 2. Create a tracking update record (History)
     const { error: trackingError } = await supabase
       .from('tracking_updates')
       .insert([{
@@ -70,7 +69,21 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
       console.error('Error creating tracking update:', trackingError)
     }
 
-    // 3. Update local state
+    const orderToUpdate = orders.find(o => o.id === orderId)
+    if (orderToUpdate?.customer_email) {
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerEmail: orderToUpdate.customer_email,
+          trackingNumber: orderToUpdate.tracking_number,
+          description: orderToUpdate.description,
+          status: newStatus,
+          destination: orderToUpdate.destination
+        })
+      })
+    }
+
     setOrders(orders.map(order =>
       order.id === orderId ? { ...order, status: newStatus } : order
     ))
@@ -78,7 +91,6 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
     setUpdatingId(null)
   }
 
-  // Delete an order
   const handleDelete = async (orderId: number, trackingNumber: string) => {
     const confirmed = window.confirm(
       `Are you sure you want to delete order ${trackingNumber}? This cannot be undone.`
@@ -121,6 +133,8 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
             <tr className="border-b border-slate-600">
               <th className="p-2">Tracking #</th>
               <th className="p-2">Customer</th>
+              <th className="p-2">Email</th>
+              <th className="p-2">Description</th>
               <th className="p-2">Status</th>
               <th className="p-2">Destination</th>
               <th className="p-2">Created</th>
@@ -132,6 +146,8 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
               <tr key={order.id} className="border-b border-slate-700">
                 <td className="p-2 font-mono text-blue-400">{order.tracking_number}</td>
                 <td className="p-2">{order.customer_name}</td>
+                <td className="p-2 text-sm text-slate-400">{order.customer_email || 'No email'}</td>
+                <td className="p-2 text-sm text-slate-300 max-w-xs truncate">{order.description || 'No description'}</td>
                 <td className="p-2">
                   <select
                     value={order.status}

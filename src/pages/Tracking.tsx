@@ -5,6 +5,8 @@ interface Order {
   id: number
   tracking_number: string
   customer_name: string
+  customer_email: string
+  description: string
   status: string
   destination: string
   created_at: string
@@ -32,7 +34,6 @@ function Tracking() {
     setOrder(null)
     setUpdates([])
 
-    // 1. Fetch the order
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -47,7 +48,6 @@ function Tracking() {
 
     setOrder(orderData)
 
-    // 2. Fetch tracking updates (THIS WAS MISSING!)
     const { data: updatesData, error: updatesError } = await supabase
       .from('tracking_updates')
       .select('*')
@@ -92,12 +92,11 @@ function Tracking() {
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-8 text-center">Track Your Order</h1>
 
-        {/* Search Form */}
         <form onSubmit={handleSearch} className="bg-slate-800 p-6 rounded-lg mb-8">
           <div className="flex gap-4">
             <input
               type="text"
-              placeholder="Enter Tracking Number (e.g., COR-2XXX-XXXXX)"
+              placeholder="Enter Tracking Number (e.g., TRK001)"
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
               className="flex-1 p-3 rounded bg-slate-700 text-white border border-slate-600 focus:border-blue-500 outline-none"
@@ -113,14 +112,12 @@ function Tracking() {
           </div>
         </form>
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-900/50 border border-red-500 text-red-400 p-4 rounded-lg mb-6">
             {error}
           </div>
         )}
 
-        {/* Order Details */}
         {order && (
           <>
             <div className="bg-slate-800 p-6 rounded-lg mb-8">
@@ -135,6 +132,11 @@ function Tracking() {
                 <div className="flex justify-between border-b border-slate-700 pb-2">
                   <span className="text-slate-400">Customer:</span>
                   <span>{order.customer_name}</span>
+                </div>
+                
+                <div className="flex justify-between border-b border-slate-700 pb-2">
+                  <span className="text-slate-400">Package:</span>
+                  <span>{order.description}</span>
                 </div>
                 
                 <div className="flex justify-between border-b border-slate-700 pb-2">
@@ -156,20 +158,16 @@ function Tracking() {
               </div>
             </div>
 
-            {/* Tracking History Timeline */}
             <div className="bg-slate-800 p-6 rounded-lg">
               <h2 className="text-xl font-bold mb-6">Tracking History</h2>
               
               <div className="relative">
-                {/* Vertical Line */}
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-600"></div>
                 
-                {/* Updates */}
                 <div className="space-y-6">
-                  {/* Show order creation as first event */}
                   <div className="relative flex gap-6">
                     <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center z-10">
-                      <span className="text-white text-sm">📦</span>
+                      <span className="text-white text-sm"></span>
                     </div>
                     <div className="flex-1">
                       <p className="font-semibold">Order Placed</p>
@@ -178,7 +176,6 @@ function Tracking() {
                     </div>
                   </div>
 
-                  {/* Tracking updates from database */}
                   {updates.map((update) => (
                     <div key={update.id} className="relative flex gap-6">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStatusColor(update.status)}`}>
@@ -188,7 +185,7 @@ function Tracking() {
                         <p className="font-semibold capitalize">{update.status}</p>
                         <p className="text-sm text-slate-400">{new Date(update.timestamp).toLocaleString()}</p>
                         {update.location && (
-                          <p className="text-sm text-slate-400">📍 {update.location}</p>
+                          <p className="text-sm text-slate-400"> {update.location}</p>
                         )}
                       </div>
                     </div>

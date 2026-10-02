@@ -1,5 +1,4 @@
 import { useState, FormEvent } from 'react'
-// @ts-expect-error Supabase client is JavaScript and has no declaration file.
 import { supabase } from '../supabaseClient'
 
 interface OrderFormProps {
@@ -9,6 +8,8 @@ interface OrderFormProps {
 interface FormData {
   tracking_number: string
   customer_name: string
+  customer_email: string
+  description: string
   status: string
   destination: string
 }
@@ -17,6 +18,8 @@ function OrderForm({ onOrderAdded }: OrderFormProps) {
   const [formData, setFormData] = useState<FormData>({
     tracking_number: '',
     customer_name: '',
+    customer_email: '',
+    description: '',
     status: 'pending',
     destination: ''
   })
@@ -33,10 +36,17 @@ function OrderForm({ onOrderAdded }: OrderFormProps) {
       .insert([formData])
 
     if (error) {
-      setMessage('❌ Error: ' + error.message)
+      setMessage(' Error: ' + error.message)
     } else {
       setMessage('✅ Order added successfully!')
-      setFormData({ tracking_number: '', customer_name: '', status: 'pending', destination: '' })
+      setFormData({ 
+        tracking_number: '', 
+        customer_name: '', 
+        customer_email: '', 
+        description: '', 
+        status: 'pending', 
+        destination: '' 
+      })
       onOrderAdded()
     }
 
@@ -62,6 +72,24 @@ function OrderForm({ onOrderAdded }: OrderFormProps) {
           placeholder="Customer Name"
           value={formData.customer_name}
           onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+          className="p-2 rounded bg-slate-700 text-white border border-slate-600 focus:border-blue-500 outline-none"
+          required
+        />
+        
+        <input
+          type="email"
+          placeholder="Customer Email"
+          value={formData.customer_email}
+          onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
+          className="p-2 rounded bg-slate-700 text-white border border-slate-600 focus:border-blue-500 outline-none"
+          required
+        />
+        
+        <input
+          type="text"
+          placeholder="Package Description (e.g., Electronics, Documents)"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           className="p-2 rounded bg-slate-700 text-white border border-slate-600 focus:border-blue-500 outline-none"
           required
         />
