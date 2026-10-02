@@ -96,7 +96,7 @@ function Tracking() {
           <div className="flex gap-4">
             <input
               type="text"
-              placeholder="Enter Tracking Number (e.g., TRK001)"
+              placeholder="Enter Tracking Number (e.g., COR-2XXX-XXXXX)"
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
               className="flex-1 p-3 rounded bg-slate-700 text-white border border-slate-600 focus:border-blue-500 outline-none"
