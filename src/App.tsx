@@ -1,3 +1,6 @@
+import CustomerSignup from './pages/CustomerSignup'
+import CustomerLogin from './pages/CustomerLogin'
+import CustomerDashboard from './pages/CustomerDashboard'
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -25,6 +28,9 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
+          <Route path="/customer-signup" element={<CustomerSignup />} />
+          <Route path="/customer-login" element={<CustomerLogin />} />
+          <Route path="/customer/dashboard" element={<CustomerDashboard />} />
         </Routes>
       </main>
       <Footer />
