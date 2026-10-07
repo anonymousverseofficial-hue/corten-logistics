@@ -1,6 +1,3 @@
-import CustomerSignup from './pages/CustomerSignup'
-import CustomerLogin from './pages/CustomerLogin'
-import CustomerDashboard from './pages/CustomerDashboard'
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -13,6 +10,9 @@ import Login from './pages/Login'
 import Services from './pages/Services'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import CustomerSignup from './pages/CustomerSignup'
+import CustomerLogin from './pages/CustomerLogin'
+import CustomerDashboard from './pages/CustomerDashboard'
 
 function App() {
   return (
@@ -28,6 +28,8 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
+          
+          {/* Customer Routes */}
           <Route path="/customer-signup" element={<CustomerSignup />} />
           <Route path="/customer-login" element={<CustomerLogin />} />
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />
