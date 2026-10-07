@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import emailjs from '@emailjs/browser'
 
 interface Order {
   id: number
@@ -44,6 +45,7 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     setUpdatingId(orderId)
 
+    // 1. Update the order status
     const { error: updateError } = await supabase
       .from('orders')
       .update({ status: newStatus })
@@ -56,6 +58,7 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
       return
     }
 
+    // 2. Create a tracking update record
     const { error: trackingError } = await supabase
       .from('tracking_updates')
       .insert([{
@@ -69,21 +72,31 @@ function OrdersList({ refreshTrigger }: OrdersListProps) {
       console.error('Error creating tracking update:', trackingError)
     }
 
+    // 3. Send email with EmailJS (NO DOMAIN NEEDED!)
     const orderToUpdate = orders.find(o => o.id === orderId)
     if (orderToUpdate?.customer_email) {
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerEmail: orderToUpdate.customer_email,
-          trackingNumber: orderToUpdate.tracking_number,
-          description: orderToUpdate.description,
-          status: newStatus,
-          destination: orderToUpdate.destination
-        })
-      })
+      try {
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+          {
+            to_email: orderToUpdate.customer_email,
+            to_name: orderToUpdate.customer_name,
+            tracking_number: orderToUpdate.tracking_number,
+            description: orderToUpdate.description,
+            status: newStatus,
+            destination: orderToUpdate.destination,
+            track_link: 'https://corten-logistics.vercel.app/track'
+          },
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        )
+        console.log('✅ Email sent to:', orderToUpdate.customer_email)
+      } catch (err) {
+        console.error('❌ EmailJS error:', err)
+      }
     }
 
+    // 4. Update local state
     setOrders(orders.map(order =>
       order.id === orderId ? { ...order, status: newStatus } : order
     ))
